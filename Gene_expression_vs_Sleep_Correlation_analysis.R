@@ -1,3 +1,10 @@
+
+#----------------------------------------------------------------------------
+# correltion between gene expression and sleep histoy & Sleep rebound
+# This code includes PCA plot, corelation analysis, 
+# heat map of correlation, Clustering of correlated samples
+
+#-------------------------------------------------------------------------
 rm(list=ls())
 
 library(dplyr)
@@ -10,16 +17,19 @@ library(RColorBrewer)
 #library(dendextend)
 
 # Please set the path where all you data are stored
+# Download the data from git hub and stored in you lcal machine and change the following path
+
 setwd("C:/Users/shijusis/OneDrive - Michigan Medicine/Desktop/Shiju_sisobhan/GitHub_folder/Brain_Transcriptomics_2026/Data")
+#-----------------------------------------------------------------------------------------------------------------------------
 
-df<-read.csv('TPM_all_samples.csv')
+df<-read.csv('TPM_all_samples.csv') # gene expression data
 
+# Data pre filtering : exclude genes whose TPM<1 in more than 50% samples
 
 #Set threshold
 threshold <- 1
 max_allowed <- floor(0.5 * 72)  # 50% of 72 samples = 36 → floor to 9
 
-#-------------------------------------------------------------------------------
 # Subset only the numeric sample columns
 tpm_data <- df[-1]
 
@@ -35,9 +45,9 @@ filtered_df <- filtered_df[!duplicated(filtered_df$ext_gene), ]
 rownames(filtered_df) <- filtered_df[, 1]   # set first column as rownames
 data <- filtered_df[, -1]            # remove the first column
 
+#------------------------------------------------------------------------------------
 
-
-
+# set sample name to a group for better visualization in latter
 sample_name<-colnames(data)
 # Create the data frame
 sample_condition <- data.frame(
@@ -700,7 +710,7 @@ col_clust <- hclust(as.dist(1 - cor(sig_gene_matrix_z, method = "pearson")),
 
 
 
-#--------------------------------------------------------
+#---------------------------------------------------------------------------------------
 
 
 all_genes <- rownames(sig_gene_matrix_z)
