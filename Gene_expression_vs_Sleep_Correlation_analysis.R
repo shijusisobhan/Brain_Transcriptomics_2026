@@ -2,6 +2,12 @@ rm(list=ls())
 
 library(dplyr)
 library(readxl)
+library(tibble)
+library(ggplot2)
+library(patchwork)
+library(RColorBrewer)
+#library(gplots)
+#library(dendextend)
 
 # Please set the path where all you data are stored
 setwd("C:/Users/shijusis/OneDrive - Michigan Medicine/Desktop/Shiju_sisobhan/GitHub_folder/Brain_Transcriptomics_2026/Data")
@@ -292,8 +298,7 @@ sig_gene_matrix_neg<-gene_matrix[which(rownames(gene_matrix) %in% sig_neg_cor),]
 
 #--------------------------------------------------------------------------------------------------------------------------------
 
-library('gplots')
-library(RColorBrewer)
+
 
 x_labels <- as.character(1:12)
 
@@ -328,7 +333,7 @@ corlated_values <- results_df %>%
   arrange(desc(abs(Cor_val))) %>%
   distinct(ext_gene, .keep_all = TRUE) 
 
-mt_genes<- c('Trh', 'AstA-R2') 
+mt_genes<- c('CG9377', 'AstA-R2') 
 
 mt_corlated_values<-corlated_values[which(corlated_values$ext_gene %in% mt_genes),]
 
@@ -396,90 +401,6 @@ sig_gene_matrix_neg<-gene_matrix[which(rownames(gene_matrix) %in% sig_neg_cor),]
 
 
 # Convert to matrix if not already
-sig_gene_matrix_df <- as.matrix(sig_gene_matrix_pos)
-
-# Row-wise z-score: (x - mean) / sd
-sig_gene_matrix_z <- t(scale(t(sig_gene_matrix_df)))
-
-
-# Compute row and column clustering (based on z-scores)
-row_clust <- hclust(as.dist(1 - cor(t(sig_gene_matrix_z), method = "pearson")),
-                    method = "complete")
-col_clust <- hclust(as.dist(1 - cor(sig_gene_matrix_z, method = "pearson")),
-                    method = "complete")
-
-# Plot heatmap
-P1 <- heatmap.2(
-  sig_gene_matrix_z,
-  
-  # --- Clustering ---
-  Rowv = as.dendrogram(row_clust),
-  Colv = as.dendrogram(col_clust),
-  #dendrogram = "none",  # hide dendrogram
-  
-  # --- Colors and trace ---
-  col = rev(brewer.pal(9, "RdBu")),
-  trace = "none",
-  
-  # --- X-axis labels ---
-  srtCol = 45,
-  adjCol = c(1, 1),
-  offsetCol = 0.5,
-  cexCol = 0.7,
-  
-  # --- Color key without histogram ---
-  key = TRUE,
-  density.info = "none",
-  key.title = "",
-  key.xlab = ""
-)
-
-#------------------------------------------------------------------------------
-
-# Convert to matrix if not already
-sig_gene_matrix_df <- as.matrix(sig_gene_matrix_neg)
-
-# Row-wise z-score: (x - mean) / sd
-sig_gene_matrix_z <- t(scale(t(sig_gene_matrix_df)))
-
-
-# Compute row and column clustering (based on z-scores)
-row_clust <- hclust(as.dist(1 - cor(t(sig_gene_matrix_z), method = "pearson")),
-                    method = "complete")
-col_clust <- hclust(as.dist(1 - cor(sig_gene_matrix_z, method = "pearson")),
-                    method = "complete")
-
-# Plot heatmap
-P1 <- heatmap.2(
-  sig_gene_matrix_z,
-  
-  # --- Clustering ---
-  Rowv = as.dendrogram(row_clust),
-  Colv = as.dendrogram(col_clust),
-  #dendrogram = "none",  # hide dendrogram
-  
-  # --- Colors and trace ---
-  col = rev(brewer.pal(9, "RdBu")),
-  trace = "none",
-  
-  # --- X-axis labels ---
-  srtCol = 45,
-  adjCol = c(1, 1),
-  offsetCol = 0.5,
-  cexCol = 0.7,
-  
-  # --- Color key without histogram ---
-  key = TRUE,
-  density.info = "none",
-  key.title = "",
-  key.xlab = ""
-)
-
-
-#-----------------------------------------------------------
-
-
-# Convert to matrix if not already
 sig_gene_matrix_df <- as.matrix(sig_gene_matrix)
 
 # Row-wise z-score: (x - mean) / sd
@@ -494,39 +415,6 @@ col_clust <- hclust(as.dist(1 - cor(sig_gene_matrix_z, method = "pearson")),
 
 
 
-library(gplots)
-library(dendextend)
-
-# Convert hclust to dendrogram
-row_dend <- as.dendrogram(row_clust)
-
-# Color 3 major clusters
-row_dend_colored <- color_branches(row_dend, k = 5)
-
-# Optional: choose specific colors
-# row_dend_colored <- color_branches(row_dend, k = 3,
-#                                    col = c("red", "blue", "darkgreen"))
-
-# Plot heatmap with colored row dendrogram
-P1 <- heatmap.2(
-  sig_gene_matrix_z,
-  
-  Rowv = row_dend_colored,
-  Colv = as.dendrogram(col_clust),
-  
-  col = rev(brewer.pal(9, "RdBu")),
-  trace = "none",
-  
-  srtCol = 45,
-  adjCol = c(1, 1),
-  offsetCol = 0.5,
-  cexCol = 0.7,
-  
-  key = TRUE,
-  density.info = "none",
-  key.title = "",
-  key.xlab = ""
-)
 
 
 #--------------------------------------------------------
@@ -542,10 +430,6 @@ gene_sign <- ifelse(all_genes %in% sig_pos_cor, "pos",
 gene_clusters <- ifelse(gene_sign == "pos", 1,
                         ifelse(gene_sign == "neg", 2, NA))
 
-
-
-library(dendextend)
-
 row_clust <- hclust(as.dist(1 - cor(t(sig_gene_matrix_z))), method = "complete")
 row_dend <- as.dendrogram(row_clust)
 
@@ -557,13 +441,8 @@ row_dend_colored <- color_branches(
 )
 
 
-
 # Remove .number suffix from column names
 colnames(sig_gene_matrix_z) <- sub("\\.\\d+$", "", colnames(sig_gene_matrix_z))
-
-#----------------------------------------------------------------
-#------------------------------------------------------------------
-
 
 
 
@@ -602,138 +481,48 @@ P1 <- heatmap.2(
 )
 
 
-# Open a new blank plot for legend in new plot window
-
-# plot.new()
-# 
-# # Add legend only
-# legend(
-#   "center",
-#   legend = names(group_colors),
-#   fill = group_colors,
-#   border = NA,
-#   bty = "n",
-#   cex = 1.2
-# )
-
-
-
-#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------------
                        # Correlation between gene expression & Sleep Rebound
-#---------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------
 
-
-# File paths
-file_path <- "Sleep_after_sampling.xlsx"
-file_path_2 <- "Sleep_baseline.xlsx"
-
-# Get sheet names from both Excel files
-sheets_1 <- excel_sheets(file_path)
-sheets_2 <- excel_sheets(file_path_2)
-
-# Print the sheet names
-cat("Sheets in first file:\n")
-print(sheets_1)
-cat("\nSheets in second file:\n")
-print(sheets_2)
-
-# Check if names and order are identical
-if (identical(sheets_1, sheets_2)) {
-  cat("\n✅ The two files have identical sheet names in the same order.\n")
-} else {
-  cat("\n❌ The sheet names or order differ between the two files.\n")
-  
-  # Show differences if any
-  cat("\nSheets only in first file:\n")
-  print(setdiff(sheets_1, sheets_2))
-  
-  cat("\nSheets only in second file:\n")
-  print(setdiff(sheets_2, sheets_1))
-  
-  cat("\nOrder differences:\n")
-  print(data.frame(File1 = sheets_1, File2 = sheets_2))
-}
-
-#-------------------------------------------------------------------------------------------------------
-
-
-
-# To store results for all sheets
-all_results <- list()
-
-for (sheet in sheets_1) {
-  # Read data (first row is header)
-  data_1 <- read_excel(file_path, sheet = sheet)
-  data_2 <- read_excel(file_path_2, sheet = sheet)
-  
-  # Remove first column
-  data_trimmed_1 <- data_1[ , -1]
-  data_trimmed_2 <- data_2[ , -1]
-  
-  # Ensure it's numeric (remove factors or characters if any)
-  data_trimmed_1 <- as.data.frame(lapply(data_trimmed_1, as.numeric))
-  data_trimmed_2 <- as.data.frame(lapply(data_trimmed_2, as.numeric))
-  
-  # Get number of columns
-  n_cols <- ncol(data_trimmed_1)
-  
-  # Initialize vector to store means
-  rebound_means <- numeric()
-  
-  # Loop for first 2, 4, ..., 24 columns (12 steps)
-  for (i in seq(2, 24, by = 2)) {
-    # Get the first i columns
-    selected_cols_1 <- data_trimmed_1[, 1:i]
-    selected_cols_2 <- data_trimmed_2[, 1:i]
-    
-    # Row-wise sum
-    row_sums_1 <- rowSums(selected_cols_1, na.rm = TRUE)
-    row_sums_2 <- rowSums(selected_cols_2, na.rm = TRUE)
-    rebound<-row_sums_1-row_sums_2 # sleep_after_sampling - baseline sampling
-    
-    # Average across all rows
-    rebound_means <- c(rebound_means, mean(rebound, na.rm = TRUE))
-  }
-  
-  # Store result for this sheet
-  all_results[[sheet]] <- rebound_means
-}
-
-# Convert results to data frame
-result_sleep_rebound <- do.call(rbind, all_results)
-colnames(result_sleep_rebound) <- paste0(seq(1,12,by=1), "_hr")
-rownames(result_sleep_rebound) <- sheets_1
+result_sleep_rebound<-read.csv("Average_Cumulative_Rebound.csv", row.names = 1)
 
 
 # step 4- prepare sleep rebound data and gene expression data for correlation analysis
 
-sleep_data <- result_sleep_rebound[!grepl("^(ZT)", rownames(result_sleep_rebound)), ]
-gene_data <- Mean_mat[, !grepl("^(ZT)", colnames(Mean_mat))]
-row_names<-rownames(gene_data)
-column_names<-colnames(sleep_data)
-gene_data<-t(gene_data)
+sleep_data_reb <- result_sleep_rebound[!grepl("^(ZT)", rownames(result_sleep_rebound)), ]
+gene_data_reb <- Mean_mat[, !grepl("^(ZT)", colnames(Mean_mat))]
+row_names<-rownames(gene_data_reb)
+column_names<-colnames(sleep_data_reb)
+gene_data_reb<-t(gene_data_reb)
 
 
 # Check if all rownames are the same
-setequal(rownames(gene_data), rownames(sleep_data))
+setequal(rownames(gene_data_reb), rownames(sleep_data_reb))
 # Row names in df1 but not in df2
-missing_in_gene_data <- setdiff(rownames(gene_data), rownames(sleep_data))
-missing_in_gene_data
+missing_in_gene_data_reb <- setdiff(rownames(gene_data_reb), rownames(sleep_data_reb))
+missing_in_gene_data_reb
 
-identical(rownames(gene_data), rownames(sleep_data)) # Returns TRUE → if both have exactly the same row names in the same order
+identical(rownames(gene_data_reb), rownames(sleep_data_reb)) # Returns TRUE → if both have exactly the same row names in the same order
 
 # Make sure both have exactly the same row names in the same order
-sleep_data <- sleep_data[rownames(gene_data), , drop = FALSE]
+sleep_data_reb <- sleep_data_reb[rownames(gene_data_reb), , drop = FALSE]
+
+identical(rownames(gene_data_reb), rownames(sleep_data_reb)) # Returns TRUE → if both have exactly the same row names in the same order
+
+
+
+
 
 #- Step 5 pearson correlation analysis -----------------------------------------------------
 
 # Calculate correlations and p-values for each gene and sleep interval
-correlation_matrix <- matrix(nrow = ncol(gene_data), ncol = ncol(sleep_data))
-p_value_matrix <- matrix(nrow = ncol(gene_data), ncol = ncol(sleep_data))
+correlation_matrix <- matrix(nrow = ncol(gene_data_reb), ncol = ncol(sleep_data_reb))
+p_value_matrix <- matrix(nrow = ncol(gene_data_reb), ncol = ncol(sleep_data_reb))
 
-for (i in 1:ncol(gene_data)) {
-  for (j in 1:ncol(sleep_data)) {
-    cor_test <- cor.test(gene_data[,i], sleep_data[,j])
+for (i in 1:ncol(gene_data_reb)) {
+  for (j in 1:ncol(sleep_data_reb)) {
+    cor_test <- cor.test(gene_data_reb[,i], sleep_data_reb[,j])
     correlation_matrix[i, j] <- cor_test$estimate
     p_value_matrix[i, j] <- cor_test$p.value
   }
@@ -749,7 +538,7 @@ adjusted_p_values_t<-round(t(adjusted_p_values), digits = 3)
 
 
 results_df <- data.frame(ext_gene = rep(row_names, each=12),
-                         Sleep = rep(column_names, times=ncol(gene_data)),
+                         Sleep = rep(column_names, times=ncol(gene_data_reb)),
                          Cor_val =unlist(lapply(1:nrow(correlation_matrix), function(i) correlation_matrix[i,])),
                          t_P = unlist(lapply(1:nrow(p_value_matrix), function(i) p_value_matrix[i,])),
                          BH_Q=unlist(lapply(1:nrow(adjusted_p_values_t), function(i) adjusted_p_values_t[i,]))
@@ -778,7 +567,7 @@ sig_correlation_matrix_neg<-correlation_matrix[which(rownames(correlation_matrix
 
 #-------------------------------------------------------------------------------------------------------
 
-gene_matrix<-t(gene_data)
+gene_matrix<-t(gene_data_reb)
 
 
 sig_gene_matrix<-gene_matrix[which(rownames(gene_matrix) %in% sig_cor_genes),]
@@ -844,14 +633,14 @@ for (i in 1:nrow(mt_corlated_values)) {
   
   
   # Extract sleep values for the given interval
-  sleep_vec <- sleep_data[,sleep_interval]
+  sleep_vec <- sleep_data_reb[,sleep_interval]
   
   # Extract gene expression values
-  expr_vec <- as.numeric(gene_data[,gene])
+  expr_vec <- as.numeric(gene_data_reb[,gene])
   
   # Combine into a data frame for plotting
   plot_df <- tibble(
-    Name = rownames(gene_data),
+    Name = rownames(gene_data_reb),
     Sleep = sleep_vec,
     Expression = expr_vec
   )
@@ -879,103 +668,19 @@ for (i in 1:nrow(mt_corlated_values)) {
 final_plot <- wrap_plots(plots, nrow = 2)
 print(final_plot)
 
+
 #-----------------------------------------------------------------------------------------------------------------
-#Cluster Heat Map Sleep History Genes
+#Cluster Heat Map Sleep rebound correlted genes Genes
 #------------------------------------------------------------------------------------------------------------------
 
+
+
+
 gene_matrix<-TPM_log2
-
-
-gene_matrix <- gene_matrix[, !grepl("^(ZT)", colnames(gene_matrix))]
-
 
 sig_gene_matrix<-gene_matrix[which(rownames(gene_matrix) %in% sig_cor_genes),]
 sig_gene_matrix_pos<-gene_matrix[which(rownames(gene_matrix) %in% sig_pos_cor),]
 sig_gene_matrix_neg<-gene_matrix[which(rownames(gene_matrix) %in% sig_neg_cor),]
-
-
-# Convert to matrix if not already
-sig_gene_matrix_df <- as.matrix(sig_gene_matrix_pos)
-
-# Row-wise z-score: (x - mean) / sd
-sig_gene_matrix_z <- t(scale(t(sig_gene_matrix_df)))
-
-
-# Compute row and column clustering (based on z-scores)
-row_clust <- hclust(as.dist(1 - cor(t(sig_gene_matrix_z), method = "pearson")),
-                    method = "complete")
-col_clust <- hclust(as.dist(1 - cor(sig_gene_matrix_z, method = "pearson")),
-                    method = "complete")
-
-# Plot heatmap
-P1 <- heatmap.2(
-  sig_gene_matrix_z,
-  
-  # --- Clustering ---
-  Rowv = as.dendrogram(row_clust),
-  Colv = as.dendrogram(col_clust),
-  #dendrogram = "none",  # hide dendrogram
-  
-  # --- Colors and trace ---
-  col = rev(brewer.pal(9, "RdBu")),
-  trace = "none",
-  
-  # --- X-axis labels ---
-  srtCol = 45,
-  adjCol = c(1, 1),
-  offsetCol = 0.5,
-  cexCol = 0.7,
-  
-  # --- Color key without histogram ---
-  key = TRUE,
-  density.info = "none",
-  key.title = "",
-  key.xlab = ""
-)
-
-#------------------------------------------------------------------------------
-
-# Convert to matrix if not already
-sig_gene_matrix_df <- as.matrix(sig_gene_matrix_neg)
-
-# Row-wise z-score: (x - mean) / sd
-sig_gene_matrix_z <- t(scale(t(sig_gene_matrix_df)))
-
-
-# Compute row and column clustering (based on z-scores)
-row_clust <- hclust(as.dist(1 - cor(t(sig_gene_matrix_z), method = "pearson")),
-                    method = "complete")
-col_clust <- hclust(as.dist(1 - cor(sig_gene_matrix_z, method = "pearson")),
-                    method = "complete")
-
-# Plot heatmap
-P1 <- heatmap.2(
-  sig_gene_matrix_z,
-  
-  # --- Clustering ---
-  Rowv = as.dendrogram(row_clust),
-  Colv = as.dendrogram(col_clust),
-  #dendrogram = "none",  # hide dendrogram
-  
-  # --- Colors and trace ---
-  col = rev(brewer.pal(9, "RdBu")),
-  trace = "none",
-  
-  # --- X-axis labels ---
-  srtCol = 45,
-  adjCol = c(1, 1),
-  offsetCol = 0.5,
-  cexCol = 0.7,
-  
-  # --- Color key without histogram ---
-  key = TRUE,
-  density.info = "none",
-  key.title = "",
-  key.xlab = ""
-)
-
-
-#-----------------------------------------------------------
 
 
 # Convert to matrix if not already
@@ -993,39 +698,6 @@ col_clust <- hclust(as.dist(1 - cor(sig_gene_matrix_z, method = "pearson")),
 
 
 
-library(gplots)
-library(dendextend)
-
-# Convert hclust to dendrogram
-row_dend <- as.dendrogram(row_clust)
-
-# Color 3 major clusters
-row_dend_colored <- color_branches(row_dend, k = 5)
-
-# Optional: choose specific colors
-# row_dend_colored <- color_branches(row_dend, k = 3,
-#                                    col = c("red", "blue", "darkgreen"))
-
-# Plot heatmap with colored row dendrogram
-P1 <- heatmap.2(
-  sig_gene_matrix_z,
-  
-  Rowv = row_dend_colored,
-  Colv = as.dendrogram(col_clust),
-  
-  col = rev(brewer.pal(9, "RdBu")),
-  trace = "none",
-  
-  srtCol = 45,
-  adjCol = c(1, 1),
-  offsetCol = 0.5,
-  cexCol = 0.7,
-  
-  key = TRUE,
-  density.info = "none",
-  key.title = "",
-  key.xlab = ""
-)
 
 
 #--------------------------------------------------------
@@ -1041,10 +713,6 @@ gene_sign <- ifelse(all_genes %in% sig_pos_cor, "pos",
 gene_clusters <- ifelse(gene_sign == "pos", 1,
                         ifelse(gene_sign == "neg", 2, NA))
 
-
-
-library(dendextend)
-
 row_clust <- hclust(as.dist(1 - cor(t(sig_gene_matrix_z))), method = "complete")
 row_dend <- as.dendrogram(row_clust)
 
@@ -1056,13 +724,8 @@ row_dend_colored <- color_branches(
 )
 
 
-
 # Remove .number suffix from column names
 colnames(sig_gene_matrix_z) <- sub("\\.\\d+$", "", colnames(sig_gene_matrix_z))
-
-#----------------------------------------------------------------
-#------------------------------------------------------------------
-
 
 
 
@@ -1099,21 +762,3 @@ P1 <- heatmap.2(
   key.title = "",
   key.xlab = ""
 )
-
-
-# Open a new blank plot for legend in new plot window
-
-# plot.new()
-# 
-# # Add legend only
-# legend(
-#   "center",
-#   legend = names(group_colors),
-#   fill = group_colors,
-#   border = NA,
-#   bty = "n",
-#   cex = 1.2
-# )
-
-
-
